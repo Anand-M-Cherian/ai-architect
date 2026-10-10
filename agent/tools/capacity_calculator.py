@@ -1,8 +1,16 @@
-from capacity_calculator import FORMULA_LIBRARY
+from agent.tools.formula_library import ASSUMPTION_DEFAULTS, FORMULA_LIBRARY
+from observability.logger import get_logger
+
+logger = get_logger(__name__)
+
+
+def _get(assumptions: dict, key: str) -> float:
+    return assumptions.get(key, ASSUMPTION_DEFAULTS[key])
+
 
 # Messaging / Chat Apps
 def calc_peak_write_qps(dau, assumptions):
-    msgs = assumptions.get("messages_per_user_per_day", 40)
+    msgs = _get(assumptions, "messages_per_user_per_day")
     peak_factor = 4
     return {
         "name": "peak_write_qps",
@@ -11,8 +19,8 @@ def calc_peak_write_qps(dau, assumptions):
     }
 
 def calc_storage_growth_messages(dau, assumptions):
-    msgs = assumptions.get("messages_per_user_per_day", 40)
-    kb_per_msg = assumptions.get("avg_message_size_kb", 1)
+    msgs = _get(assumptions, "messages_per_user_per_day")
+    kb_per_msg = _get(assumptions, "avg_message_size_kb")
     daily_storage_mb = dau * msgs * kb_per_msg / 1024
     monthly_storage_gb = daily_storage_mb * 30 / 1024
     return {
@@ -25,7 +33,7 @@ def calc_storage_growth_messages(dau, assumptions):
 
 # Social Networks
 def calc_feed_updates_qps(dau, assumptions):
-    posts = assumptions.get("posts_per_user_per_day", 5)
+    posts = _get(assumptions, "posts_per_user_per_day")
     peak_factor = 3
     return {
         "name": "feed_updates_qps",
@@ -34,8 +42,8 @@ def calc_feed_updates_qps(dau, assumptions):
     }
 
 def calc_fanout_load(assumptions):
-    posts = assumptions.get("posts_per_user_per_day", 5)
-    followers = assumptions.get("avg_followers", 200)
+    posts = _get(assumptions, "posts_per_user_per_day")
+    followers = _get(assumptions, "avg_followers")
     return {
         "name": "fanout_load",
         "formula": "posts × avg_followers",
@@ -45,7 +53,7 @@ def calc_fanout_load(assumptions):
 
 # Video Streaming
 def calc_peak_concurrent_streams(dau, assumptions):
-    avg_hours = assumptions.get("average_streaming_hours_per_user_per_day", 2)
+    avg_hours = _get(assumptions, "average_streaming_hours_per_user_per_day")
     peak_factor = 4
     return {
         "name": "peak_concurrent_streams",
@@ -54,9 +62,9 @@ def calc_peak_concurrent_streams(dau, assumptions):
     }
 
 def calc_network_throughput(dau, assumptions):
-    avg_hours = assumptions.get("average_streaming_hours_per_user_per_day", 2)
+    avg_hours = _get(assumptions, "average_streaming_hours_per_user_per_day")
     peak_factor = 4
-    mbps_per_stream = assumptions.get("mbps_per_stream", 3)
+    mbps_per_stream = _get(assumptions, "mbps_per_stream")
     concurrent = dau * (avg_hours / 24) * peak_factor
     return {
         "name": "network_throughput",
@@ -67,7 +75,7 @@ def calc_network_throughput(dau, assumptions):
 
 # E-Commerce
 def calc_orders_per_second(dau, assumptions):
-    orders = assumptions.get("orders_per_user_per_day", 2)
+    orders = _get(assumptions, "orders_per_user_per_day")
     peak_factor = 3
     return {
         "name": "orders_per_second",
@@ -78,7 +86,7 @@ def calc_orders_per_second(dau, assumptions):
 
 # Ticket Booking
 def calc_peak_booking_qps(dau, assumptions):
-    bookings = assumptions.get("bookings_per_user_per_day", 1)
+    bookings = _get(assumptions, "bookings_per_user_per_day")
     peak_factor = 3
     return {
         "name": "peak_booking_qps",
@@ -89,7 +97,7 @@ def calc_peak_booking_qps(dau, assumptions):
 
 # Food Delivery
 def calc_orders_per_second_delivery(dau, assumptions):
-    orders = assumptions.get("orders_per_user_per_day", 2)
+    orders = _get(assumptions, "orders_per_user_per_day")
     peak_factor = 3
     return {
         "name": "orders_per_second",
@@ -98,9 +106,9 @@ def calc_orders_per_second_delivery(dau, assumptions):
     }
 
 def calc_driver_concurrency(dau, assumptions):
-    orders = assumptions.get("orders_per_user_per_day", 2)
+    orders = _get(assumptions, "orders_per_user_per_day")
     peak_factor = 3
-    avg_delivery_time_min = assumptions.get("avg_delivery_time_minutes", 30)
+    avg_delivery_time_min = _get(assumptions, "avg_delivery_time_minutes")
     orders_sec = dau * orders / 86400 * peak_factor
     return {
         "name": "driver_concurrency",
@@ -111,7 +119,7 @@ def calc_driver_concurrency(dau, assumptions):
 
 # Ride-Hailing
 def calc_rides_per_second(dau, assumptions):
-    rides = assumptions.get("rides_per_user_per_day", 2)
+    rides = _get(assumptions, "rides_per_user_per_day")
     peak_factor = 3
     return {
         "name": "rides_per_second",
@@ -120,9 +128,9 @@ def calc_rides_per_second(dau, assumptions):
     }
 
 def calc_driver_concurrency_rides(dau, assumptions):
-    rides = assumptions.get("rides_per_user_per_day", 2)
+    rides = _get(assumptions, "rides_per_user_per_day")
     peak_factor = 3
-    avg_trip_time_min = assumptions.get("avg_trip_time_minutes", 20)
+    avg_trip_time_min = _get(assumptions, "avg_trip_time_minutes")
     rides_sec = dau * rides / 86400 * peak_factor
     return {
         "name": "driver_concurrency",
@@ -133,7 +141,7 @@ def calc_driver_concurrency_rides(dau, assumptions):
 
 # Analytics / Data Warehouse
 def calc_query_throughput(dau, assumptions):
-    queries = assumptions.get("queries_per_user_per_hour", 2)
+    queries = _get(assumptions, "queries_per_user_per_hour")
     concurrent_users = dau * 0.1  # assume 10% are analysts
     return {
         "name": "query_throughput",
@@ -144,7 +152,7 @@ def calc_query_throughput(dau, assumptions):
 
 # Banking / FinTech
 def calc_transactions_per_second(dau, assumptions):
-    txns = assumptions.get("transactions_per_user_per_day", 10)
+    txns = _get(assumptions, "transactions_per_user_per_day")
     peak_factor = 3
     return {
         "name": "transactions_per_second",
@@ -155,7 +163,7 @@ def calc_transactions_per_second(dau, assumptions):
 
 # Education / Learning
 def calc_concurrent_students(dau, assumptions):
-    avg_hours = assumptions.get("avg_learning_hours_per_user_per_day", 2)
+    avg_hours = _get(assumptions, "avg_learning_hours_per_user_per_day")
     peak_factor = 3
     return {
         "name": "concurrent_students",
@@ -166,7 +174,7 @@ def calc_concurrent_students(dau, assumptions):
 
 # Search Engines
 def calc_search_qps(dau, assumptions):
-    queries = assumptions.get("queries_per_user_per_day", 10)
+    queries = _get(assumptions, "queries_per_user_per_day")
     peak_factor = 3
     return {
         "name": "search_qps",
@@ -177,7 +185,7 @@ def calc_search_qps(dau, assumptions):
 
 # CDN
 def calc_edge_requests_per_second(dau, assumptions):
-    requests = assumptions.get("requests_per_user_per_day", 100)
+    requests = _get(assumptions, "requests_per_user_per_day")
     peak_factor = 3
     return {
         "name": "edge_requests_per_second",
@@ -200,6 +208,16 @@ def normalize_assumptions(raw_assumptions):
                 normalized[canonical] = raw_assumptions[alias]
         if canonical not in normalized and canonical in raw_assumptions:
             normalized[canonical] = raw_assumptions[canonical]
+
+    # Pass through every other canonical key the formulas read; drop the rest loudly.
+    for key, value in raw_assumptions.items():
+        if key in ASSUMPTION_DEFAULTS and key not in normalized:
+            normalized[key] = value
+
+    known_aliases = {alias for aliases in PARAMETER_MAP.values() for alias in aliases}
+    unknown = set(raw_assumptions) - set(ASSUMPTION_DEFAULTS) - known_aliases
+    if unknown:
+        logger.warning(f"Dropping unknown assumptions: {sorted(unknown)}")
 
     return normalized
 
