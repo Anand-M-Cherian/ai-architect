@@ -4,10 +4,31 @@ llm:
  provider: openai        # openai 
  model: gpt-4o
 
+small_llm:
+# for small tasks
+ provider: openai        # openai 
+ model: gpt-4o-mini
+
 memory:
   host: localhost
   port: 5432
   database: ai-architect-db
   summarize_at_tokens: 4000
   keep_last_messages: 20
+
+postgresql_db_tables:
+ req_spec_table: requirement_specs
+ sizing_spec_table: sizing_specs
+
+vector_store:
+ provider: chroma
+ retrieval_mode: dense  # dense | sparse | hybrid
+
+embeddings:
+ provider: openai             
+ model: text-embedding-3-small
+
+chromadb:
+ persist_dir: .chromadb/
+ collection_name: aws_doc_kb
 

@@ -2,7 +2,7 @@ from observability.logger import get_logger
 from pathlib import Path
 from rich.console import Console
 from rich.prompt import Prompt
-from agent.orchestrator import handle_query
+from agent.designSupervisor import handle_query
 from dotenv import load_dotenv
 
 load_dotenv(Path(__file__).parent / ".env")

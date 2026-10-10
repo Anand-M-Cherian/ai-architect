@@ -42,4 +42,7 @@ Final Output:
     "messages_per_user_per_day": 40
   }
 }""",
+"component_selection_prompt": """
+ 
+"""
 }
