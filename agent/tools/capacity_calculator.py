@@ -15,8 +15,9 @@ def calc_peak_write_qps(dau, assumptions):
     return {
         "name": "peak_write_qps",
         "formula": "DAU × msgs/user/day ÷ 86,400 × peak_factor",
-        "value": dau * msgs / 86400 * peak_factor
+        "value": dau * msgs / 86400 * peak_factor,
     }
+
 
 def calc_storage_growth_messages(dau, assumptions):
     msgs = _get(assumptions, "messages_per_user_per_day")
@@ -27,7 +28,7 @@ def calc_storage_growth_messages(dau, assumptions):
         "name": "storage_growth",
         "formula": "DAU × msgs/user/day × KB/msg",
         "daily_MB": daily_storage_mb,
-        "monthly_GB": monthly_storage_gb
+        "monthly_GB": monthly_storage_gb,
     }
 
 
@@ -38,8 +39,9 @@ def calc_feed_updates_qps(dau, assumptions):
     return {
         "name": "feed_updates_qps",
         "formula": "DAU × posts/user/day ÷ 86,400 × peak_factor",
-        "value": dau * posts / 86400 * peak_factor
+        "value": dau * posts / 86400 * peak_factor,
     }
+
 
 def calc_fanout_load(assumptions):
     posts = _get(assumptions, "posts_per_user_per_day")
@@ -47,7 +49,7 @@ def calc_fanout_load(assumptions):
     return {
         "name": "fanout_load",
         "formula": "posts × avg_followers",
-        "value": posts * followers
+        "value": posts * followers,
     }
 
 
@@ -58,8 +60,9 @@ def calc_peak_concurrent_streams(dau, assumptions):
     return {
         "name": "peak_concurrent_streams",
         "formula": "DAU × (avg_hours/24) × peak_factor",
-        "value": dau * (avg_hours / 24) * peak_factor
+        "value": dau * (avg_hours / 24) * peak_factor,
     }
+
 
 def calc_network_throughput(dau, assumptions):
     avg_hours = _get(assumptions, "average_streaming_hours_per_user_per_day")
@@ -69,7 +72,7 @@ def calc_network_throughput(dau, assumptions):
     return {
         "name": "network_throughput",
         "formula": "concurrent_streams × Mbps/stream",
-        "value_Mbps": concurrent * mbps_per_stream
+        "value_Mbps": concurrent * mbps_per_stream,
     }
 
 
@@ -80,7 +83,7 @@ def calc_orders_per_second(dau, assumptions):
     return {
         "name": "orders_per_second",
         "formula": "DAU × orders/user/day ÷ 86,400 × peak_factor",
-        "value": dau * orders / 86400 * peak_factor
+        "value": dau * orders / 86400 * peak_factor,
     }
 
 
@@ -91,7 +94,7 @@ def calc_peak_booking_qps(dau, assumptions):
     return {
         "name": "peak_booking_qps",
         "formula": "DAU × bookings/user/day ÷ 86,400 × peak_factor",
-        "value": dau * bookings / 86400 * peak_factor
+        "value": dau * bookings / 86400 * peak_factor,
     }
 
 
@@ -102,8 +105,9 @@ def calc_orders_per_second_delivery(dau, assumptions):
     return {
         "name": "orders_per_second",
         "formula": "DAU × orders/user/day ÷ 86,400 × peak_factor",
-        "value": dau * orders / 86400 * peak_factor
+        "value": dau * orders / 86400 * peak_factor,
     }
+
 
 def calc_driver_concurrency(dau, assumptions):
     orders = _get(assumptions, "orders_per_user_per_day")
@@ -113,7 +117,7 @@ def calc_driver_concurrency(dau, assumptions):
     return {
         "name": "driver_concurrency",
         "formula": "orders/sec × avg_delivery_time",
-        "value": orders_sec * avg_delivery_time_min
+        "value": orders_sec * avg_delivery_time_min,
     }
 
 
@@ -124,8 +128,9 @@ def calc_rides_per_second(dau, assumptions):
     return {
         "name": "rides_per_second",
         "formula": "DAU × rides/user/day ÷ 86,400 × peak_factor",
-        "value": dau * rides / 86400 * peak_factor
+        "value": dau * rides / 86400 * peak_factor,
     }
+
 
 def calc_driver_concurrency_rides(dau, assumptions):
     rides = _get(assumptions, "rides_per_user_per_day")
@@ -135,7 +140,7 @@ def calc_driver_concurrency_rides(dau, assumptions):
     return {
         "name": "driver_concurrency",
         "formula": "rides/sec × avg_trip_time",
-        "value": rides_sec * avg_trip_time_min
+        "value": rides_sec * avg_trip_time_min,
     }
 
 
@@ -146,7 +151,7 @@ def calc_query_throughput(dau, assumptions):
     return {
         "name": "query_throughput",
         "formula": "concurrent analysts × queries/hour ÷ 3600",
-        "value": concurrent_users * queries / 3600
+        "value": concurrent_users * queries / 3600,
     }
 
 
@@ -157,7 +162,7 @@ def calc_transactions_per_second(dau, assumptions):
     return {
         "name": "transactions_per_second",
         "formula": "DAU × txns/user/day ÷ 86,400 × peak_factor",
-        "value": dau * txns / 86400 * peak_factor
+        "value": dau * txns / 86400 * peak_factor,
     }
 
 
@@ -168,7 +173,7 @@ def calc_concurrent_students(dau, assumptions):
     return {
         "name": "concurrent_students",
         "formula": "DAU × (avg_hours/24) × peak_factor",
-        "value": dau * (avg_hours / 24) * peak_factor
+        "value": dau * (avg_hours / 24) * peak_factor,
     }
 
 
@@ -179,7 +184,7 @@ def calc_search_qps(dau, assumptions):
     return {
         "name": "search_qps",
         "formula": "DAU × queries/user/day ÷ 86,400 × peak_factor",
-        "value": dau * queries / 86400 * peak_factor
+        "value": dau * queries / 86400 * peak_factor,
     }
 
 
@@ -190,15 +195,28 @@ def calc_edge_requests_per_second(dau, assumptions):
     return {
         "name": "edge_requests_per_second",
         "formula": "DAU × requests/user/day ÷ 86,400 × peak_factor",
-        "value": dau * requests / 86400 * peak_factor
+        "value": dau * requests / 86400 * peak_factor,
     }
+
 
 def normalize_assumptions(raw_assumptions):
     PARAMETER_MAP = {
-        "messages_per_user_per_day": ["msgs_per_user", "daily_messages", "messages/day"],
-        "queries_per_user_per_day": ["searches_per_user", "daily_queries", "queries/day"],
+        "messages_per_user_per_day": [
+            "msgs_per_user",
+            "daily_messages",
+            "messages/day",
+        ],
+        "queries_per_user_per_day": [
+            "searches_per_user",
+            "daily_queries",
+            "queries/day",
+        ],
         "orders_per_user_per_day": ["purchases_per_user", "daily_orders", "orders/day"],
-        "average_streaming_hours_per_user_per_day": ["streaming_hours", "watch_hours", "avg_streaming_time"]
+        "average_streaming_hours_per_user_per_day": [
+            "streaming_hours",
+            "watch_hours",
+            "avg_streaming_time",
+        ],
     }
 
     normalized = {}
@@ -221,6 +239,7 @@ def normalize_assumptions(raw_assumptions):
 
     return normalized
 
+
 def capacity_calculator(requirement_spec, thread_id="abc"):
     system_type = requirement_spec.get("system_type", "").lower()
     dau = requirement_spec.get("explicit_requirements", {}).get("daily_active_users", 0)
@@ -230,11 +249,13 @@ def capacity_calculator(requirement_spec, thread_id="abc"):
         if category in system_type:
             for f in formulas:
                 calc = f(dau, assumptions)
-                results.append({
-                    "thread_id": thread_id,
-                    "resource_category": calc["name"],
-                    "requirement": calc.get("value") or calc
-                })
+                results.append(
+                    {
+                        "thread_id": thread_id,
+                        "resource_category": calc["name"],
+                        "requirement": calc.get("value") or calc,
+                    }
+                )
 
     print("Capacity Calculation Results:")
     for result in results:
