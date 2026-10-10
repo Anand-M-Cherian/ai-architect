@@ -29,12 +29,15 @@ def handle_query(question: str, thread_id: str) -> str:
     agent_config = {"configurable": {"thread_id": thread_id}}
     response = _agent.invoke({"messages": [{"role": "user", "content": question}]}, agent_config)
     result = _handle_interrupts(_agent, response, agent_config)
-    requirement_spec = result["messages"][-1].content
+    spec = result.get("structured_response")
+    if spec is None:
+        raise RuntimeError("requirements agent finished without a structured spec")
+    requirement_spec = spec.model_dump(mode="json")
     print("\nFinal Structured Requirement Spec (JSON):")
-    print(requirement_spec)
-    _database.save_requirement_specs(thread_id, json.loads(requirement_spec))
+    print(spec.model_dump_json(indent=2))
+    _database.save_requirement_specs(thread_id, requirement_spec)
     # call to capacity agent which generates and saves in sizing_specs table
-    sizing_specs = invoke_capacity_agent(json.loads(requirement_spec), thread_id)
+    sizing_specs = invoke_capacity_agent(requirement_spec, thread_id)
 
     # call to sizing_specs table to fetch the table for this thread_id
 
@@ -48,7 +51,7 @@ def handle_query(question: str, thread_id: str) -> str:
     #call to cost estimation agent
 
     # call to architecture composer agent (include design critic agent to verify)
-    return requirement_spec
+    return spec.model_dump_json(indent=2)
 
 def _handle_interrupts(agent, result, config: dict) -> dict:
     """Collect clarification answers and resume human-in-the-loop tool calls."""
