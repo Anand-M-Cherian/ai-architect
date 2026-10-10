@@ -13,14 +13,14 @@ from uuid import uuid4
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from dotenv import load_dotenv  # noqa: E402
-from langchain_core.messages import ToolMessage  # noqa: E402
-from langgraph.types import Command  # noqa: E402
+from dotenv import load_dotenv
+from langchain_core.messages import ToolMessage
+from langgraph.types import Command
 
 load_dotenv(ROOT / ".env")
 
-from agent.factory import build_req_agent  # noqa: E402
-from schemas import RequirementSpec  # noqa: E402
+from agent.factory import build_req_agent
+from schemas import RequirementSpec
 
 FALLBACK_ANSWER = "No preference, use your judgement."
 DAU_QUESTION = re.compile(
@@ -50,7 +50,7 @@ def run(agent, first_message, answers):
         result = agent.invoke(Command(resume={"decisions": decisions}), config)
 
     spec = result.get("structured_response")
-    if not isinstance(spec, RequirementSpec):
+    if spec is None:
         raise RuntimeError("requirements agent finished without a structured spec")
     retries = sum(
         1
