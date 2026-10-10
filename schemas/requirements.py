@@ -73,7 +73,11 @@ class RequirementSpec(BaseModel):
     )
     clarifications: dict[str, str] = Field(
         default_factory=dict,
-        description="The user's answers to your architecture questions, keyed by short topic.",
+        description=(
+            "The user's answer to each question you asked, keyed by short topic, in their "
+            "own words as text (e.g. 'Yes, voice and video'). Always include the budget "
+            "answer under 'budget', also when they declined."
+        ),
     )
     assumptions: dict[AssumptionKey, Annotated[float, Field(gt=0)]] = Field(
         default_factory=dict,
