@@ -222,7 +222,14 @@ def normalize_assumptions(raw_assumptions):
     normalized = {}
     for canonical, aliases in PARAMETER_MAP.items():
         for alias in aliases:
-            if alias in raw_assumptions:
+            if alias not in raw_assumptions:
+                continue
+            if canonical in raw_assumptions:
+                logger.warning(
+                    f"Both {canonical}={raw_assumptions[canonical]} and alias "
+                    f"{alias}={raw_assumptions[alias]} given; using {canonical}"
+                )
+            else:
                 normalized[canonical] = raw_assumptions[alias]
         if canonical not in normalized and canonical in raw_assumptions:
             normalized[canonical] = raw_assumptions[canonical]
