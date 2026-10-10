@@ -200,51 +200,11 @@ def calc_edge_requests_per_second(dau, assumptions):
 
 
 def normalize_assumptions(raw_assumptions):
-    PARAMETER_MAP = {
-        "messages_per_user_per_day": [
-            "msgs_per_user",
-            "daily_messages",
-            "messages/day",
-        ],
-        "queries_per_user_per_day": [
-            "searches_per_user",
-            "daily_queries",
-            "queries/day",
-        ],
-        "orders_per_user_per_day": ["purchases_per_user", "daily_orders", "orders/day"],
-        "average_streaming_hours_per_user_per_day": [
-            "streaming_hours",
-            "watch_hours",
-            "avg_streaming_time",
-        ],
-    }
-
-    normalized = {}
-    for canonical, aliases in PARAMETER_MAP.items():
-        for alias in aliases:
-            if alias not in raw_assumptions:
-                continue
-            if canonical in raw_assumptions:
-                logger.warning(
-                    f"Both {canonical}={raw_assumptions[canonical]} and alias "
-                    f"{alias}={raw_assumptions[alias]} given; using {canonical}"
-                )
-            else:
-                normalized[canonical] = raw_assumptions[alias]
-        if canonical not in normalized and canonical in raw_assumptions:
-            normalized[canonical] = raw_assumptions[canonical]
-
-    # Pass through every other canonical key the formulas read; drop the rest loudly.
-    for key, value in raw_assumptions.items():
-        if key in ASSUMPTION_DEFAULTS and key not in normalized:
-            normalized[key] = value
-
-    known_aliases = {alias for aliases in PARAMETER_MAP.values() for alias in aliases}
-    unknown = set(raw_assumptions) - set(ASSUMPTION_DEFAULTS) - known_aliases
+    # Keys are canonical by construction (RequirementSpec's enum); drop anything else loudly.
+    unknown = set(raw_assumptions) - set(ASSUMPTION_DEFAULTS)
     if unknown:
         logger.warning(f"Dropping unknown assumptions: {sorted(unknown)}")
-
-    return normalized
+    return {k: v for k, v in raw_assumptions.items() if k in ASSUMPTION_DEFAULTS}
 
 
 def capacity_calculator(requirement_spec, thread_id="abc"):

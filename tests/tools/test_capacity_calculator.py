@@ -61,29 +61,6 @@ def test_normalize_keeps_all_canonical_keys():
     assert cc.normalize_assumptions(raw) == raw
 
 
-@pytest.mark.parametrize(
-    ("alias", "canonical"),
-    [
-        ("msgs_per_user", "messages_per_user_per_day"),
-        ("searches_per_user", "queries_per_user_per_day"),
-        ("daily_orders", "orders_per_user_per_day"),
-        ("watch_hours", "average_streaming_hours_per_user_per_day"),
-    ],
-)
-def test_normalize_still_maps_aliases(alias, canonical):
-    assert cc.normalize_assumptions({alias: 7}) == {canonical: 7}
-
-
-def test_normalize_canonical_key_wins_over_alias(caplog):
-    with caplog.at_level(logging.WARNING):
-        result = cc.normalize_assumptions(
-            {"msgs_per_user": 60, "messages_per_user_per_day": 45}
-        )
-    assert result == {"messages_per_user_per_day": 45}
-    assert "messages_per_user_per_day=45" in caplog.text
-    assert "msgs_per_user=60" in caplog.text
-
-
 def test_normalize_drops_unknown_keys_with_warning(caplog):
     with caplog.at_level(logging.WARNING):
         result = cc.normalize_assumptions({"msgs_per_day": 60, "avg_followers": 300})
