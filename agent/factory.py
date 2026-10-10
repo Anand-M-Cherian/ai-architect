@@ -1,6 +1,10 @@
 from langchain.agents import create_agent
 from langchain.agents.structured_output import ToolStrategy
-from agent.interrupt_middleware import ClarificationInterruptMiddleware, ask_user
+from agent.interrupt_middleware import (
+    ClarificationInterruptMiddleware,
+    ask_user,
+    one_tool_call_per_turn,
+)
 from agent.prompts_library import SYSTEM_PROMPTS
 from memory.short_term import ShortTermMemory
 from db_store import DatabaseStore
@@ -28,6 +32,7 @@ def build_req_agent():
             middleware=[
                 ShortTermMemory.get_summarization_middleware(),
                 ClarificationInterruptMiddleware(),
+                one_tool_call_per_turn,
             ],
         )
     except Exception as e:

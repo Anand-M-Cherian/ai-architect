@@ -1,6 +1,7 @@
 import atexit
 import json
 from aws_mcp import MCPClient
+from langgraph.errors import GraphRecursionError
 from langgraph.types import Command
 from agent.factory import build_req_agent
 from llm.factory import get_small_llm, get_embedder
@@ -13,6 +14,8 @@ logger = get_logger(__name__)
 _agent = None
 _memory = None
 _database = None
+# Max graph steps per agent run (each resume after a question is a new run).
+REQUIREMENTS_RECURSION_LIMIT = 25
 
 def _close_database() -> None:
     if _database:
@@ -26,9 +29,18 @@ def handle_query(question: str, thread_id: str) -> str:
     logger.info(f"Handling query for session {thread_id}: {question}")
     if _agent is None:
         _agent, _memory, _database = build_req_agent()
-    agent_config = {"configurable": {"thread_id": thread_id}}
-    response = _agent.invoke({"messages": [{"role": "user", "content": question}]}, agent_config)
-    result = _handle_interrupts(_agent, response, agent_config)
+    agent_config = {
+        "configurable": {"thread_id": thread_id},
+        "recursion_limit": REQUIREMENTS_RECURSION_LIMIT,
+    }
+    try:
+        response = _agent.invoke({"messages": [{"role": "user", "content": question}]}, agent_config)
+        result = _handle_interrupts(_agent, response, agent_config)
+    except GraphRecursionError as e:
+        raise RuntimeError(
+            "requirements agent couldn't produce a valid spec after "
+            f"{REQUIREMENTS_RECURSION_LIMIT} steps"
+        ) from e
     spec = result.get("structured_response")
     if spec is None:
         raise RuntimeError("requirements agent finished without a structured spec")

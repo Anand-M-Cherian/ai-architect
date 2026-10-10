@@ -16,6 +16,7 @@ _REQUIREMENTS_PROMPT = (
     "- Ask at most 1-2 further questions, one at a time, only about topics that change\n"
     "  the architecture (voice/video, regions, compliance, latency).\n"
     "- Always ask questions by calling the ask_user tool, never as plain assistant text.\n"
+    "- Never return the structured response in the same turn as asking a question.\n"
     "- Don't ask about sizing details (messages per user, file sizes, etc.); use typical\n"
     "  defaults.\n"
     "- When you are done clarifying, return the structured response. Never use\n"
