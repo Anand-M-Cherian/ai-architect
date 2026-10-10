@@ -1,4 +1,7 @@
-from capacity_calculator import FORMULA_LIBRARY
+from typing import Any
+
+from .formula_library import FORMULA_LIBRARY
+from llm.factory import get_small_llm
 
 # Messaging / Chat Apps
 def calc_peak_write_qps(dau, assumptions):
@@ -203,15 +206,21 @@ def normalize_assumptions(raw_assumptions):
 
     return normalized
 
-def capacity_calculator(requirement_spec, thread_id="abc"):
-    system_type = requirement_spec.get("system_type", "").lower()
+def calculate_capacity(
+    requirement_spec: dict[str, Any],
+    thread_id: str = "abc",
+) -> list[dict[str, Any]]:
+    """Calculate workload metrics from a requirement specification."""
+    system_type = map_system(requirement_spec.get("system_type", "").lower())
     dau = requirement_spec.get("explicit_requirements", {}).get("daily_active_users", 0)
     assumptions = normalize_assumptions(requirement_spec.get("assumptions", {}))
     results = []
     for category, formulas in FORMULA_LIBRARY.items():
         if category in system_type:
             for f in formulas:
-                calc = f(dau, assumptions)
+                fun_name=globals()[f]
+                calc = fun_name(dau, assumptions)
+                print(f"Calculated {calc['name']} for {category}: {calc.get('value') or calc}")
                 results.append({
                     "thread_id": thread_id,
                     "resource_category": calc["name"],
@@ -222,3 +231,22 @@ def capacity_calculator(requirement_spec, thread_id="abc"):
     for result in results:
         print(f"  {result['resource_category']}: {result['requirement']}")
     return results
+
+def map_system(req_system_type):
+    small_llm = get_small_llm()
+    # Build the prompt dynamically
+    prompt = f"""
+    You are a helper that maps system type from requirements spec to the system type in formula_library.
+    
+    System type from requirements spec:
+    {req_system_type}
+    
+    formula library:
+    {FORMULA_LIBRARY.items()}
+    Task: Return the matching key from FORMULA_LIBRARY.
+
+    """
+    result = small_llm.invoke(prompt)
+    text = result.content
+    print(f"\nLLM raw response:\n{text}")
+    return text

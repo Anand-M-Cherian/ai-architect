@@ -1,6 +1,9 @@
+import json
+
 from langchain.agents import create_agent
 from agent.interrupt_middleware import ClarificationInterruptMiddleware, ask_user
 from agent.prompts_library import SYSTEM_PROMPTS
+from agent.tools import capacity_calculator
 from memory.short_term import ShortTermMemory
 from db_store import DatabaseStore
 from llm.factory import get_llm, get_small_llm
@@ -32,13 +35,20 @@ def build_req_agent():
         raise
     return agent, memory, database
 
-# def build_small_llm():
-#     """Create and return a small Langchain agent"""
-#     try:
-#         llm = get_small_llm()
-#         agent = create_agent(
-#         llm
-#         )
-#     except Exception as e:
-#         print(f"Error occurred while building the agent. Closing memory. {e}")
-#     return agent
+
+def build_capacity_agent(requirement_spec):
+    try:
+        llm = get_llm()
+        agent = create_agent(
+            llm,
+            system_prompt=(
+                f"{SYSTEM_PROMPTS['capacity_calculator_prompt']}\n\n"
+                "Requirement specification:\n"
+                f"{json.dumps(requirement_spec, indent=2)}"
+            ),
+            tools=[capacity_calculator.calculate_capacity],
+        )
+    except Exception as e:
+        print(f"Error occurred while building the agent. Closing memory. {e}")
+        raise
+    return agent
