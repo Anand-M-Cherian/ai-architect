@@ -5,7 +5,7 @@ from pathlib import Path
 import pytest
 
 from agent.tools import capacity_calculator as cc
-from agent.tools.formula_library import ASSUMPTION_DEFAULTS
+from agent.tools.formula_library import ASSUMPTION_DEFAULTS, FORMULA_LIBRARY
 
 DAU = 1_000_000
 SOURCE = Path(cc.__file__).read_text(encoding="utf-8")
@@ -20,7 +20,7 @@ DEFAULT_CASES = [
         DAU * 40 * 1 / 1024 * 30 / 1024,
     ),
     (lambda: cc.calc_feed_updates_qps(DAU, {})["value"], DAU * 5 / 86400 * 3),
-    (lambda: cc.calc_fanout_load({})["value"], 5 * 200),
+    (lambda: cc.calc_fanout_load(DAU, {})["value"], 5 * 200),
     (lambda: cc.calc_peak_concurrent_streams(DAU, {})["value"], DAU * (2 / 24) * 4),
     (lambda: cc.calc_network_throughput(DAU, {})["value_Mbps"], DAU * (2 / 24) * 4 * 3),
     (lambda: cc.calc_orders_per_second(DAU, {})["value"], DAU * 2 / 86400 * 3),
@@ -76,3 +76,36 @@ def test_every_key_the_calculator_reads_is_in_assumption_defaults():
 def test_no_hardcoded_defaults_left():
     # The only assumptions.get(...) allowed is the one inside _get.
     assert SOURCE.count("assumptions.get(") == 1
+
+
+def test_every_formula_name_resolves_to_a_function():
+    for names in FORMULA_LIBRARY.values():
+        for name in names:
+            assert callable(getattr(cc, name, None)), name
+
+
+@pytest.mark.parametrize("system_type", list(FORMULA_LIBRARY))
+def test_calculate_capacity_runs_for_every_system_type(monkeypatch, system_type):
+    # map_system is an LLM call; with a canonical system_type it should echo the key.
+    monkeypatch.setattr(cc, "map_system", lambda s: s)
+    spec = {
+        "system_type": system_type,
+        "explicit_requirements": {"daily_active_users": DAU},
+        "assumptions": {},
+    }
+    rows = cc.calculate_capacity(spec, thread_id="t1")
+    assert len(rows) == len(FORMULA_LIBRARY[system_type])
+    assert all(row["thread_id"] == "t1" for row in rows)
+
+
+def test_calculate_capacity_uses_spec_assumptions(monkeypatch):
+    monkeypatch.setattr(cc, "map_system", lambda s: s)
+    spec = {
+        "system_type": "messaging / chat apps",
+        "explicit_requirements": {"daily_active_users": DAU},
+        "assumptions": {"messages_per_user_per_day": 80},
+    }
+    rows = {
+        r["resource_category"]: r["requirement"] for r in cc.calculate_capacity(spec)
+    }
+    assert rows["peak_write_qps"] == pytest.approx(DAU * 80 / 86400 * 4)

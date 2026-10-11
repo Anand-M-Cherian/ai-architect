@@ -1,4 +1,7 @@
+from typing import Any
+
 from agent.tools.formula_library import ASSUMPTION_DEFAULTS, FORMULA_LIBRARY
+from llm.factory import get_small_llm
 from observability.logger import get_logger
 
 logger = get_logger(__name__)
@@ -43,7 +46,7 @@ def calc_feed_updates_qps(dau, assumptions):
     }
 
 
-def calc_fanout_load(assumptions):
+def calc_fanout_load(dau, assumptions):
     posts = _get(assumptions, "posts_per_user_per_day")
     followers = _get(assumptions, "avg_followers")
     return {
@@ -207,15 +210,23 @@ def normalize_assumptions(raw_assumptions):
     return {k: v for k, v in raw_assumptions.items() if k in ASSUMPTION_DEFAULTS}
 
 
-def capacity_calculator(requirement_spec, thread_id="abc"):
-    system_type = requirement_spec.get("system_type", "").lower()
+def calculate_capacity(
+    requirement_spec: dict[str, Any],
+    thread_id: str = "abc",
+) -> list[dict[str, Any]]:
+    """Calculate workload metrics from a requirement specification."""
+    system_type = map_system(requirement_spec.get("system_type", "").lower())
     dau = requirement_spec.get("explicit_requirements", {}).get("daily_active_users", 0)
     assumptions = normalize_assumptions(requirement_spec.get("assumptions", {}))
     results = []
     for category, formulas in FORMULA_LIBRARY.items():
         if category in system_type:
             for f in formulas:
-                calc = f(dau, assumptions)
+                fun_name = globals()[f]
+                calc = fun_name(dau, assumptions)
+                print(
+                    f"Calculated {calc['name']} for {category}: {calc.get('value') or calc}"
+                )
                 results.append(
                     {
                         "thread_id": thread_id,
@@ -228,3 +239,23 @@ def capacity_calculator(requirement_spec, thread_id="abc"):
     for result in results:
         print(f"  {result['resource_category']}: {result['requirement']}")
     return results
+
+
+def map_system(req_system_type):
+    small_llm = get_small_llm()
+    # Build the prompt dynamically
+    prompt = f"""
+    You are a helper that maps system type from requirements spec to the system type in formula_library.
+    
+    System type from requirements spec:
+    {req_system_type}
+    
+    formula library:
+    {FORMULA_LIBRARY.items()}
+    Task: Return the matching key from FORMULA_LIBRARY.
+
+    """
+    result = small_llm.invoke(prompt)
+    text = result.content
+    print(f"\nLLM raw response:\n{text}")
+    return text
