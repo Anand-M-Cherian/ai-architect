@@ -5,6 +5,7 @@ from agent.factory import build_req_agent, build_capacity_agent
 from llm.factory import get_small_llm, get_embedder
 from observability.logger import get_logger
 from config import config
+import re, json
 logger = get_logger(__name__)
 _agent = None
 _memory = None
@@ -74,9 +75,18 @@ def invoke_capacity_agent(requirement_spec, thread_id):
     capAgent=build_capacity_agent(requirement_spec)
     capacity_results = capAgent.invoke({"messages": [{"role": "user", "content": "Calculate capacity based on the requirement spec."}]})
     print("\nCapacity Calculation Results (JSON):")
-    print(capacity_results)
+    final_ai_message = capacity_results["messages"][-1]
+    print(final_ai_message.content)
+     # Extract content between ```json ... ```
+    match = re.search(r"```json\s*(.*?)\s*```", final_ai_message.content, re.DOTALL)    
+    print("match object:", match)
+    if match:
+        json_str = match.group(1)
+        capacity_data = json.loads(json_str)
+        print("\nParsed Capacity Data (JSON):")
+        print(capacity_data)
     # Save capacity specs to the database
-
+    _database.save_sizing_specs(thread_id, capacity_data)
 
 
 def _handle_interrupts(agent, result, config: dict) -> dict:

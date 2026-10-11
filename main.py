@@ -33,8 +33,7 @@ def run():
                 question = user_input.removeprefix("/ask ").strip()
                 logger.info(f"Ask command received: {question}")
                 console.print(f"[dim]Searching for: {question}...[/dim]")
-                response = handle_query(question, 'def')
-                console.print(response)
+                handle_query(question, 'ghi')
 
             # elif user_input == "/new_session":
             #     console.print(f"[green]New session started: {session_id}[/green]")
