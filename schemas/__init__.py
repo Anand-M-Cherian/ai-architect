@@ -6,18 +6,25 @@ allowed project import is agent/tools/formula_library.py (a plain-dict module).
 
 Modules:
     requirements.py  RequirementSpec      (requirements agent)
+    components.py    ComponentChoices     (component selection agent → cost estimation)
 Planned:
     sizing.py        SizingTable          (capacity modeling agent)
-    components.py    ComponentChoices     (component selection agent)
     cost.py          CostBreakdown        (cost estimation agent)
     topology.py      TopologyGraph        (architecture composer agent)
     findings.py      Findings             (design critic agent)
 """
 
+from schemas.components import (
+    ComponentChoice,
+    ComponentChoices,
+    EngineName,
+    ServiceName,
+)
 from schemas.requirements import (
     ASSUMPTION_KEYS,
     SYSTEM_TYPES,
     AssumptionKey,
+    AwsRegion,
     ExplicitRequirements,
     RequirementSpec,
     SystemType,
@@ -27,7 +34,12 @@ __all__ = [
     "ASSUMPTION_KEYS",
     "SYSTEM_TYPES",
     "AssumptionKey",
+    "AwsRegion",
+    "ComponentChoice",
+    "ComponentChoices",
+    "EngineName",
     "ExplicitRequirements",
     "RequirementSpec",
+    "ServiceName",
     "SystemType",
 ]
