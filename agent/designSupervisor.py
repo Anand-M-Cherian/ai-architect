@@ -1,8 +1,5 @@
 import atexit
-import json, re
-
-from regex import match
-from agent.tools import capacity_calculator
+from langgraph.errors import GraphRecursionError
 from langgraph.types import Command
 from agent.factory import build_req_agent, build_capacity_agent
 from llm.factory import get_small_llm, get_embedder
@@ -12,6 +9,8 @@ logger = get_logger(__name__)
 _agent = None
 _memory = None
 _database = None
+# Max graph steps per agent run (each resume after a question is a new run).
+REQUIREMENTS_RECURSION_LIMIT = 25
 
 def _close_database() -> None:
     if _database:
@@ -26,29 +25,35 @@ def handle_query(question: str, thread_id: str) -> str:
     try:
         if _agent is None:
             _agent, _memory, _database = build_req_agent()
-        agent_config = {"configurable": {"thread_id": thread_id}}
-        response = _agent.invoke(
-            {"messages": [{"role": "user", "content": question}]},
-            agent_config,
-        )
-        result = _handle_interrupts(_agent, response, agent_config)
-        requirement_spec = result["messages"][-1].content
+        agent_config = {
+            "configurable": {"thread_id": thread_id},
+            "recursion_limit": REQUIREMENTS_RECURSION_LIMIT,
+        }
+        try:
+            response = _agent.invoke(
+                {"messages": [{"role": "user", "content": question}]},
+                agent_config,
+            )
+            result = _handle_interrupts(_agent, response, agent_config)
+        except GraphRecursionError as e:
+            raise RuntimeError(
+                "requirements agent couldn't produce a valid spec after "
+                f"{REQUIREMENTS_RECURSION_LIMIT} steps"
+            ) from e
+        spec = result.get("structured_response")
+        if spec is None:
+            raise RuntimeError("requirements agent finished without a structured spec")
+        requirement_spec = spec.model_dump(mode="json")
         print("\nFinal Structured Requirement Spec (JSON):")
-        print(requirement_spec)
-        # Extract content between ```json ... ```
-        match = re.search(r"```json\s*(\{.*?\})\s*```", requirement_spec, re.DOTALL)
-        print("match object:", match)
-        if match:
-            json_str = match.group(1)
-            requirement_data = json.loads(json_str)
-            _database.save_requirement_specs(thread_id, requirement_data)
+        print(spec.model_dump_json(indent=2))
+        _database.save_requirement_specs(thread_id, requirement_spec)
 
-            # Call the capacity agent, which generates and saves sizing specs.
-            invoke_capacity_agent(requirement_data, thread_id)
+        # Call the capacity agent, which generates and saves sizing specs.
+        invoke_capacity_agent(requirement_spec, thread_id)
 
-            sizing_spec_data = _database.get_sizing_specs(thread_id)
-            print("\nPrinting the sizing_spec_data now:")
-            print(sizing_spec_data)
+        sizing_spec_data = _database.get_sizing_specs(thread_id)
+        print("\nPrinting the sizing_spec_data now:")
+        print(sizing_spec_data)
 
         # call to component selection agent
         #handle_component_selection(requirement_spec,sizing_spec_data)
@@ -57,7 +62,7 @@ def handle_query(question: str, thread_id: str) -> str:
 
         # call to architecture composer agent (include design critic agent to verify)
         logger.info("Successfully handled query for session %s", thread_id)
-        return requirement_spec
+        return spec.model_dump_json(indent=2)
     except Exception:
         logger.exception("Failed to handle query for session %s", thread_id)
         raise
@@ -71,7 +76,7 @@ def invoke_capacity_agent(requirement_spec, thread_id):
     print("\nCapacity Calculation Results (JSON):")
     print(capacity_results)
     # Save capacity specs to the database
-    
+
 
 
 def _handle_interrupts(agent, result, config: dict) -> dict:
