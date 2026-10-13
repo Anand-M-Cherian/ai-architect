@@ -6,7 +6,8 @@ allowed project import is agent/tools/formula_library.py (a plain-dict module).
 
 Modules:
     requirements.py  RequirementSpec      (requirements agent)
-    components.py    ComponentChoices     (component selection agent → cost estimation)
+    components.py    ComponentChoices     (component selection agent → cost estimation;
+                                           AwsDesign, a per-service union on `service`)
 Planned:
     sizing.py        SizingTable          (capacity modeling agent)
     cost.py          CostBreakdown        (cost estimation agent)
@@ -15,10 +16,11 @@ Planned:
 """
 
 from schemas.components import (
-    ComponentChoice,
+    AWS_SERVICES,
+    AwsComponent,
+    AwsDesign,
     ComponentChoices,
-    EngineName,
-    ServiceName,
+    unknown_references,
 )
 from schemas.requirements import (
     ASSUMPTION_KEYS,
@@ -32,14 +34,15 @@ from schemas.requirements import (
 
 __all__ = [
     "ASSUMPTION_KEYS",
+    "AWS_SERVICES",
     "SYSTEM_TYPES",
     "AssumptionKey",
+    "AwsComponent",
+    "AwsDesign",
     "AwsRegion",
-    "ComponentChoice",
     "ComponentChoices",
-    "EngineName",
     "ExplicitRequirements",
     "RequirementSpec",
-    "ServiceName",
     "SystemType",
+    "unknown_references",
 ]
